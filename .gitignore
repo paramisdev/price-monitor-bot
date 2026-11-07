@@ -21,6 +21,11 @@ htmlcov/
 .env.*
 !.env.example
 
+# AI tooling / local workspace rules
+AGENTS.md
+opencode.json
+openclaw.json
+
 # Application data
 data/*.db
 data/*.db-*
