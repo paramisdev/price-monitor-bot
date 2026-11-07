@@ -8,7 +8,7 @@ def report_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="🔄 Проверить снова",
+                    text="Проверить снова",
                     callback_data=MonitorCallback(action="check").pack(),
                 )
             ]

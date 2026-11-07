@@ -68,7 +68,7 @@ class BookParser:
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
 
-            for card in soup.select("article.product_pod"):
+            for card in soup.find_all("article", class_="product_pod"):
                 book = self._parse_card(card, page_url)
                 if book is not None:
                     books_by_url.setdefault(book.url, book)

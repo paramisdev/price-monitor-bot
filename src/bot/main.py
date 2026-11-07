@@ -2,10 +2,12 @@ import asyncio
 import logging
 from contextlib import suppress
 
+import aiosqlite
 import httpx
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramAPIError
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.config import Settings
@@ -13,7 +15,7 @@ from bot.handlers import common, monitor
 from bot.keyboards.monitor import report_keyboard
 from bot.middlewares.admin import AdminOnlyMiddleware
 from bot.middlewares.throttling import ThrottlingMiddleware
-from bot.services.monitor import PriceMonitorService
+from bot.services.monitor import EmptyCatalogueError, PriceMonitorService
 from bot.services.parser import BookParser
 from bot.services.report import format_report
 from bot.services.repository import PriceRepository
@@ -32,9 +34,9 @@ async def _monitor_loop(
         await asyncio.sleep(interval_seconds)
         try:
             result = await service.run_once()
-        except Exception:
+        except (EmptyCatalogueError, httpx.HTTPError, aiosqlite.Error, ValueError):
             logger.exception("Scheduled price check failed")
-            with suppress(Exception):
+            with suppress(TelegramAPIError):
                 await bot.send_message(
                     chat_id=admin_chat_id,
                     text="Не удалось выполнить плановую проверку цен. Подробности в логах.",
@@ -51,7 +53,7 @@ async def _monitor_loop(
                 text=format_report(result),
                 reply_markup=report_keyboard(),
             )
-        except Exception:
+        except TelegramAPIError:
             logger.exception("Failed to send scheduled report")
 
 

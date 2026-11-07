@@ -8,11 +8,22 @@ MAX_NEW_BOOKS_IN_REPORT = 5
 
 
 def format_report(result: MonitorResult) -> str:
-    decreased = [change for change in result.changes if change.delta < 0]
-    increased = [change for change in result.changes if change.delta > 0]
+    lines = _summary_lines(result)
+    if result.changes:
+        lines.extend(_change_lines(result.changes))
+    else:
+        lines.append("Цены не изменились.")
 
-    lines = [
-        "📊 <b>Мониторинг цен</b>",
+    if result.new_books:
+        lines.append("")
+        lines.extend(_new_books_lines(result.new_books))
+
+    return "\n".join(lines).strip()
+
+
+def _summary_lines(result: MonitorResult) -> list[str]:
+    return [
+        "<b>Мониторинг цен</b>",
         f"Проверено книг: <b>{result.checked}</b>",
         f"Изменений: <b>{len(result.changes)}</b>",
         f"Новых позиций: <b>{len(result.new_books)}</b>",
@@ -20,28 +31,32 @@ def format_report(result: MonitorResult) -> str:
         "",
     ]
 
+
+def _change_lines(changes: tuple[PriceChange, ...]) -> list[str]:
+    decreased = [change for change in changes if change.delta < 0]
+    increased = [change for change in changes if change.delta > 0]
+    lines: list[str] = []
+
     if decreased:
-        lines.append("<b>🔻 Подешевело</b>")
+        lines.append("<b>Подешевело</b>")
         lines.extend(_format_change(change) for change in decreased)
         lines.append("")
 
     if increased:
-        lines.append("<b>🔺 Подорожало</b>")
+        lines.append("<b>Подорожало</b>")
         lines.extend(_format_change(change) for change in increased)
         lines.append("")
 
-    if not result.changes:
-        lines.append("Цены не изменились.")
+    return lines
 
-    if result.new_books:
-        lines.append("")
-        lines.append("<b>🆕 Новые позиции</b>")
-        lines.extend(_format_book(book) for book in result.new_books[:MAX_NEW_BOOKS_IN_REPORT])
-        remaining = len(result.new_books) - MAX_NEW_BOOKS_IN_REPORT
-        if remaining > 0:
-            lines.append(f"…и ещё {remaining}.")
 
-    return "\n".join(lines).strip()
+def _new_books_lines(books: tuple[Book, ...]) -> list[str]:
+    lines = ["<b>Новые позиции</b>"]
+    lines.extend(_format_book(book) for book in books[:MAX_NEW_BOOKS_IN_REPORT])
+    remaining = len(books) - MAX_NEW_BOOKS_IN_REPORT
+    if remaining > 0:
+        lines.append(f"…и ещё {remaining}.")
+    return lines
 
 
 def _format_change(change: PriceChange) -> str:

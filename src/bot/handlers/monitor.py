@@ -1,12 +1,14 @@
 import logging
 
+import aiosqlite
+import httpx
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from bot.callbacks.monitor import MonitorCallback
 from bot.keyboards.monitor import report_keyboard
-from bot.services.monitor import PriceMonitorService
+from bot.services.monitor import EmptyCatalogueError, PriceMonitorService
 from bot.services.report import format_report
 
 logger = logging.getLogger(__name__)
@@ -19,7 +21,7 @@ async def _run_check(message: Message, service: PriceMonitorService) -> None:
 
     try:
         result = await service.run_once()
-    except Exception:
+    except (EmptyCatalogueError, httpx.HTTPError, aiosqlite.Error, ValueError):
         logger.exception("Price check failed")
         await status_message.edit_text(
             "Не удалось получить цены. Проверьте логи и попробуйте ещё раз."
