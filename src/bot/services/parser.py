@@ -44,8 +44,6 @@ def parse_price(raw: str) -> tuple[Decimal, str]:
 
 
 class BookParser:
-    """Async parser for the books.toscrape.com catalogue."""
-
     def __init__(
         self,
         *,
